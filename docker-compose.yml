@@ -1,0 +1,92 @@
+version: "3.9"
+networks:
+  backend: {}
+  db: {}
+  frontend: {}
+services:
+  api:
+    build: ./API/
+    container_name: API
+    networks:
+      - backend
+    volumes:
+      - type: volume
+        source: api_volume
+        target: /app
+  grafana:
+    build: ./Grafana/
+    container_name: Grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+      - INFLUXDB_TOKEN=TjTZaXM7ae2v6GKP7Y8G%s8HSApQDC2H79jgnc_3o2TLvNFVHztWkV#^%o@psjRo
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=MoreThanCertifiedInDockerDB
+    networks:
+      - backend
+      - db
+      - frontend
+    ports:
+      - 3000:3000
+    volumes:
+      - type: volume
+        source: grafana_volume
+        target: /var/lib/grafana
+  influxdb:
+    build: ./InfluxDB/
+    container_name: InfluxDB
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password
+      - DOCKER_INFLUXDB_INIT_ORG=MoreThanCertifiedInDocker
+      - DOCKER_INFLUXDB_INIT_BUCKET=MoreThanCertifiedInDocker
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=TjTZaXM7ae2v6GKP7Y8G%s8HSApQDC2H79jgnc_3o2TLvNFVHztWkV#^%o@psjRo
+    networks:
+      - backend
+    volumes:
+      - type: volume
+        source: influxdb_volume
+        target: /var/lib/influxdb2
+  nodered:
+    build: ./NodeRED/
+    container_name: NodeRED
+    environment:
+      - INFLUXDB_TOKEN=TjTZaXM7ae2v6GKP7Y8G%s8HSApQDC2H79jgnc_3o2TLvNFVHztWkV#^%o@psjRo
+    networks:
+      - backend
+    ports:
+      - 1880:1880
+    volumes:
+      - type: volume
+        source: nodered_volume
+        target: /data
+  postgres:
+    build: ./Postgres/
+    container_name: Postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=MoreThanCertifiedInDockerDB
+    networks:
+      - db
+    volumes:
+      - type: volume
+        source: postgres_volume
+        target: /var/lib/postgresql/data/
+  postgrest:
+    container_name: PostgREST
+    environment:
+      - PGRST_DB_URI=postgres://admin:password@postgres:5432/MoreThanCertifiedInDockerDB
+      - PGRST_DB_ANON_ROLE=admin
+    image: postgrest/postgrest:v7.0.1
+    networks:
+      - backend
+      - db
+volumes:
+  api_volume: {}
+  grafana_volume: {}
+  influxdb_volume: {}
+  nodered_volume: {}
+  postgres_volume: {}
